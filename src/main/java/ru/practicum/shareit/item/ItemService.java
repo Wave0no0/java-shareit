@@ -17,7 +17,7 @@ public class ItemService {
     private final ItemRepository repository;
     private final UserRepository userRepository;
     private final ItemMapper mapper;
-//
+
     public ItemDto create(long ownerId, ItemDto dto) {
         validateUser(ownerId);
         Item item = mapper.fromDto(dto, ownerId);
