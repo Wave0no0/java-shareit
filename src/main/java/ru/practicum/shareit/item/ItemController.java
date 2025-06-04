@@ -1,5 +1,6 @@
 package ru.practicum.shareit.item;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,14 @@ public class ItemController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    public ItemDto createItem(@RequestHeader("X-Sharer-User-Id") Long ownerId,
+                              @RequestBody @Valid ItemDto itemDto) {
+        return service.create(ownerId, itemDto);
+    }
+
+    @PostMapping("/old") // оставил старый метод для обратной совместимости
+    @ResponseStatus(HttpStatus.CREATED)
+    @Deprecated
     public ItemDto create(@RequestHeader("X-Sharer-User-Id") long userId,
                           @RequestBody ItemDto dto) {
         return service.create(userId, dto);

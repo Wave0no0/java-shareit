@@ -29,6 +29,13 @@ public class UserService {
     }
 
     public UserDto create(UserDto userDto) {
+        // Проверка на дублирующий email
+        boolean emailExists = repository.findAll().stream()
+                .anyMatch(u -> u.getEmail().equalsIgnoreCase(userDto.getEmail()));
+        if (emailExists) {
+            throw new IllegalArgumentException("Email уже используется другим пользователем");
+        }
+
         User user = mapper.fromDto(userDto);
         return mapper.toDto(repository.save(user));
     }
@@ -36,12 +43,22 @@ public class UserService {
     public UserDto update(long id, UserDto userDto) {
         User existing = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("User not found"));
+
+        // Проверка на дублирующий email (если он меняется)
+        if (userDto.getEmail() != null &&
+                !userDto.getEmail().equalsIgnoreCase(existing.getEmail()) &&
+                repository.findAll().stream()
+                        .anyMatch(u -> u.getEmail().equalsIgnoreCase(userDto.getEmail()))) {
+            throw new IllegalArgumentException("Email уже используется другим пользователем");
+        }
+
         if (userDto.getName() != null) {
             existing.setName(userDto.getName());
         }
         if (userDto.getEmail() != null) {
             existing.setEmail(userDto.getEmail());
         }
+
         return mapper.toDto(repository.save(existing));
     }
 

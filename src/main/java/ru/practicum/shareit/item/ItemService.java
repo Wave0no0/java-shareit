@@ -47,12 +47,19 @@ public class ItemService {
     }
 
     public List<ItemDto> search(String text) {
-        if (text == null || text.isBlank()) return List.of();
+        if (text == null || text.isBlank()) {
+            return List.of(); // пустой запрос — пустой результат
+        }
+
         String lower = text.toLowerCase();
+
         return repository.findAll().stream()
-                .filter(Item::getAvailable)
-                .filter(i -> i.getName().toLowerCase().contains(lower)
-                        || i.getDescription().toLowerCase().contains(lower))
+                .filter(item -> Boolean.TRUE.equals(item.getAvailable())) // только доступные
+                .filter(item -> {
+                    String name = item.getName() != null ? item.getName().toLowerCase() : "";
+                    String desc = item.getDescription() != null ? item.getDescription().toLowerCase() : "";
+                    return name.contains(lower) || desc.contains(lower);
+                })
                 .map(mapper::toDto)
                 .collect(Collectors.toList());
     }
