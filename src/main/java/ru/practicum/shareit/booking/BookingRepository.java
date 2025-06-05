@@ -1,17 +1,12 @@
 package ru.practicum.shareit.booking;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
 import java.util.List;
+import java.util.Optional;
 
-@Repository
-public interface BookingRepository extends JpaRepository<Booking, Long> {
-    List<Booking> findByItemIdOrderByStart(long itemId);
+public interface BookingRepository {
+    Booking save(Booking booking);
 
-    List<Booking> findByBookerId(long bookerId);
+    Optional<Booking> findById(long id);
 
-    List<Booking> findByBookerIdAndItemId(long bookerId, long itemId);
-
-    List<Booking> findByItemOwnerId(long ownerId);
+    List<Booking> findAll();
 }
