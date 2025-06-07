@@ -3,6 +3,9 @@ package ru.practicum.shareit.item.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import ru.practicum.shareit.item.entity.Comment;
+
+import java.util.List;
 
 @Data
 public class ItemDto {
@@ -16,4 +19,9 @@ public class ItemDto {
 
     @NotNull(message = "Поле available обязательно")
     private Boolean available;
+
+    private List<CommentDto> comments;
+
+    private BookingDtoLite lastBooking;
+    private BookingDtoLite nextBooking;
 }
