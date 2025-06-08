@@ -51,7 +51,7 @@ public class ItemService {
     }
 
     @Transactional(readOnly = true)
-    public ItemDto getById(long itemId) {
+    public ItemDto getById(long userId, long itemId) {
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new NotFoundException("Item not found"));
         ItemDto dto = mapper.toDto(item);
@@ -60,8 +60,8 @@ public class ItemService {
                 .map(mapper::toCommentDto)
                 .collect(Collectors.toList()));
 
-        Long ownerId = item.getOwner().getId();
-        if (userRepository.findById(ownerId).isPresent()) {
+        // Показываем бронирования только владельцу
+        if (item.getOwner().getId().equals(userId)) {
             List<Booking> bookings = bookingRepository.findByItem_IdIn(List.of(itemId));
             LocalDateTime now = LocalDateTime.now();
 
