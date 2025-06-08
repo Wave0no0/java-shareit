@@ -52,19 +52,20 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingDto approve(Long userId, Long bookingId, boolean approved) {
-        Booking booking = getBooking(bookingId); // Если бронирование не найдено, getBooking сам выбросит NotFoundException
+        Booking booking = getBooking(bookingId);
 
         if (!booking.getItem().getOwner().getId().equals(userId)) {
-            throw new NotFoundException("Booking not found or access denied"); // Теперь вернет 404
+            throw new ValidationException("Only the owner can approve bookings");
         }
 
         if (booking.getStatus() != BookingStatus.WAITING) {
-            throw new ValidationException("Booking already processed"); // Вернет 400
+            throw new ValidationException("Booking already processed");
         }
 
         booking.setStatus(approved ? BookingStatus.APPROVED : BookingStatus.REJECTED);
         return mapper.toDto(bookingRepository.save(booking));
     }
+
     @Override
     @Transactional(readOnly = true)
     public BookingDto getById(Long userId, Long bookingId) {
