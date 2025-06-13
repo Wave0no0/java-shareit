@@ -42,13 +42,6 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-
-		<dependency>
-			<groupId>ru.practicum</groupId>
-			<artifactId>server</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-			<scope>test</scope>
-		</dependency>
 	</dependencies>
 
 	<build>
