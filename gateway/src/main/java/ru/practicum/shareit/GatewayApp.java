@@ -1,5 +1,6 @@
 package ru.practicum.shareit;
 
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -15,5 +16,13 @@ public class GatewayApp {
     @Bean
     public RestTemplate restTemplate() {
         return new RestTemplate();
+    }
+
+    @Bean
+    public ApplicationRunner runner() {
+        return args -> {
+            Thread.sleep(10_000); // Задержка на 10 секунд перед приёмом запросов
+            System.out.println("Accepting traffic...");
+        };
     }
 }
