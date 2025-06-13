@@ -4,6 +4,7 @@ import org.springframework.http.*;
 import org.springframework.lang.Nullable;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.DefaultUriBuilderFactory;
 
 import java.util.Collections;
 import java.util.Map;
@@ -14,6 +15,15 @@ public class BaseClient {
 
     public BaseClient(RestTemplate rest) {
         this.rest = rest;
+    }
+
+    public BaseClient(RestTemplate rest, String baseUrl) {
+        this.rest = rest;
+        this.rest.setUriTemplateHandler(new DefaultUriBuilderFactory(baseUrl));
+    }
+
+    protected BaseClient() {
+        this.rest = null;
     }
 
     protected <T> ResponseEntity<Object> post(String path, long userId, T body) {

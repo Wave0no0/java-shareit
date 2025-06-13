@@ -23,7 +23,7 @@ public class BookingClient extends BaseClient {
     }
 
     public ResponseEntity<Object> approve(long userId, long bookingId, boolean approved) {
-        return patch("/" + bookingId + "?approved=" + approved, userId);
+        return patch("/" + bookingId + "?approved=" + approved, userId, null); // ✅ передаём null как body
     }
 
     public ResponseEntity<Object> getById(long userId, long bookingId) {
