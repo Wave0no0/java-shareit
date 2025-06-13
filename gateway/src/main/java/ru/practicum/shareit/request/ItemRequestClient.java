@@ -13,23 +13,23 @@ import java.util.Map;
 public class ItemRequestClient extends BaseClient {
 
     public ItemRequestClient(@Value("${shareit-server.url}") String serverUrl, RestTemplate restTemplate) {
-        super(restTemplate, serverUrl + "/requests"); // ✅ правильный порядок
+        super(restTemplate, serverUrl + "/requests");
     }
 
     public ResponseEntity<Object> create(long userId, ItemRequestDto dto) {
-        return post("", userId, dto); // ✅ подходит под BaseClient.post(String, long, T)
+        return post("", userId, dto);
     }
 
     public ResponseEntity<Object> getOwnRequests(long userId) {
-        return get("", userId); // ✅ get(String, long)
+        return get("", userId);
     }
 
     public ResponseEntity<Object> getAllRequests(long userId, int from, int size) {
         Map<String, Object> params = Map.of("from", from, "size", size);
-        return get("/all?from={from}&size={size}", userId, params); // ✅ get(String, long, Map)
+        return get("/all?from={from}&size={size}", userId, params);
     }
 
     public ResponseEntity<Object> getById(long userId, long requestId) {
-        return get("/" + requestId, userId); // ✅ get(String, long)
+        return get("/" + requestId, userId);
     }
 }
