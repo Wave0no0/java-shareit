@@ -18,11 +18,4 @@ public class GatewayApp {
         return new RestTemplate();
     }
 
-    @Bean
-    public ApplicationRunner runner() {
-        return args -> {
-            Thread.sleep(10_000); // Задержка на 10 секунд перед приёмом запросов
-            System.out.println("Accepting traffic...");
-        };
-    }
 }
