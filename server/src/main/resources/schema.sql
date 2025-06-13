@@ -5,13 +5,23 @@ CREATE table if not exists public.users (
 	CONSTRAINT users_email_key UNIQUE (email)
 );
 
+CREATE table if not exists public.item_request (
+	id SERIAL PRIMARY KEY,
+	description varchar(255) NOT NULL,
+	created timestamp without time zone NOT NULL,
+	author_id int8 NOT NULL,
+	CONSTRAINT item_request_users_fk FOREIGN KEY (author_id) REFERENCES public.users(id) ON DELETE CASCADE
+);
+
 CREATE table if not exists public.item (
 	id SERIAL PRIMARY KEY,
 	"name" varchar(128) NOT NULL,
 	description varchar(255) NOT NULL,
 	available bool NOT NULL,
 	owner_id int8 NOT NULL,
-	CONSTRAINT items_users_fk FOREIGN KEY (owner_id) REFERENCES public.users(id) ON DELETE CASCADE
+	item_request_id int8,
+	CONSTRAINT items_users_fk FOREIGN KEY (owner_id) REFERENCES public.users(id) ON DELETE CASCADE,
+	CONSTRAINT items_item_request_fk FOREIGN KEY (item_request_id) REFERENCES public.item_request(id) ON DELETE SET NULL
 );
 
 CREATE TABLE if not exists public.booking (
@@ -34,11 +44,4 @@ CREATE TABLE if not exists public."comment" (
 	item_id int8 NOT NULL,
 	CONSTRAINT comments_items_fk FOREIGN KEY (item_id) REFERENCES public.item(id) ON DELETE CASCADE,
 	CONSTRAINT comments_users_fk FOREIGN KEY (author_id) REFERENCES public.users(id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS item_request (
-    id SERIAL PRIMARY KEY,
-    description VARCHAR(255) NOT NULL,
-    requestor_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    created TIMESTAMP WITHOUT TIME ZONE NOT NULL
 );
