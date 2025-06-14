@@ -45,7 +45,7 @@ public class BookingService {
         if (isCrossing) {
             throw new ValidationException("item is already booked for this time");
         }
-        Booking saved = bookingRepository.save(mapper.toBooking(dto, bookerId, item.getName()));
+        Booking saved = bookingRepository.save(mapper.toBooking(dto, bookerId, item));
         return mapper.toBookingDto(saved);
     }
 
@@ -92,9 +92,7 @@ public class BookingService {
         if (!userRepository.existsById(ownerId)) {
             throw new NotFoundException("There is no user with id=" + ownerId);
         }
-        if (itemRepository.findByOwnerId(ownerId).isEmpty()) {
-            throw new NotFoundException("User don't have any items");
-        }
+
         Predicate<Booking> predicateByState = getPredicateByState(state);
         return bookingRepository.findByItemOwnerId(ownerId).stream()
                 .filter(predicateByState)

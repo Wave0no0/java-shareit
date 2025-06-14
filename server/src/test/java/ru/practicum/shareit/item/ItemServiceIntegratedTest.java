@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @Transactional
-@SpringBootTest
+@SpringBootTest(classes = ru.practicum.shareit.ShareItApp.class)
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 class ItemServiceIntegratedTest extends DBIntegrationTestBase {
 
