@@ -1,46 +1,52 @@
 package ru.practicum.shareit.user;
 
-import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.shareit.user.dto.UserDto;
-import ru.practicum.shareit.validator.marker.Create;
-import ru.practicum.shareit.validator.marker.Update;
+import ru.practicum.shareit.user.dto.UserSaveDto;
+import ru.practicum.shareit.validation.OnCreate;
+import ru.practicum.shareit.validation.OnUpdate;
 
-@Slf4j
-@RestController
+@Controller
+@RequestMapping(path = "/users")
 @RequiredArgsConstructor
-@RequestMapping("/users")
+@Slf4j
 public class UserController {
-
-    private final UserClient client;
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Object> getByUserId(@PathVariable @Positive long id) {
-        log.info("Getting user id={}", id);
-        return client.getUserById(id);
-    }
+    private final UserClient userClient;
 
     @PostMapping
-    public ResponseEntity<Object> createUser(@RequestBody @Validated(Create.class) UserDto user) {
-        log.info("Saving user {}", user);
-        return client.saveUser(user);
-
+    public ResponseEntity<Object> addUser(@Validated(OnCreate.class) @RequestBody UserSaveDto userDto) {
+        log.info("POST /users, userDto={}", userDto);
+        return userClient.addUser(userDto);
     }
 
-    @PatchMapping("/{id}")
-    public ResponseEntity<Object> updateUser(@RequestBody @Validated(Update.class) UserDto user,
-                                             @PathVariable @Positive long id) {
-        log.info("Updating user {}", user);
-        return client.updateUser(user, id);
+    @GetMapping
+    public ResponseEntity<Object> getAllUsers() {
+        log.info("GET /users");
+        return userClient.getAllUsers();
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Object> deleteUserById(@PathVariable @Positive long id) {
-        log.info("Deleting user with id {}", id);
-        return client.deleteUserById(id);
+    @GetMapping("/{userId}")
+    public ResponseEntity<Object> getUserById(@PathVariable Long userId) {
+        log.info("GET user/{userId}, userId={}", userId);
+        return userClient.getUserById(userId);
+    }
+
+    @PatchMapping("/{userId}")
+    public ResponseEntity<Object> updateUser(@PathVariable Long userId,
+                                             @Validated(OnUpdate.class) @RequestBody UserSaveDto userDto) {
+        log.info("PATCH users/{userId}, userId={}", userId);
+        return userClient.updateUser(userId, userDto);
+    }
+
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<Object> deleteUser(@PathVariable Long userId) {
+        log.info("DELETE users/{userId}, userId={}", userId);
+        userClient.deleteUser(userId);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }

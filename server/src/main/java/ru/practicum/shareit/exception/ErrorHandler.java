@@ -1,35 +1,62 @@
 package ru.practicum.shareit.exception;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.Map;
-
-@ControllerAdvice()
+@Slf4j
+@RestControllerAdvice
 public class ErrorHandler {
 
     @ExceptionHandler
-    public ResponseEntity<Map<String, String>> handleValidationException(final ValidationException e) {
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("error", e.getMessage()));
-
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleNotFound(NotFoundException e) {
+        log.warn("Resource not found {}", e.getMessage());
+        return new ErrorResponse(e.getMessage());
     }
 
     @ExceptionHandler
-    public ResponseEntity<Map<String, String>> handleNotFoundException(final NotFoundException e) {
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(Map.of("error", e.getMessage()));
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleDuplicatedData(DuplicatedDataException e) {
+        log.warn("Duplicated data: {}", e.getMessage());
+        return new ErrorResponse(e.getMessage());
     }
 
     @ExceptionHandler
-    public ResponseEntity<Map<String, String>> handleEmailConflictException(final EmailConflictException e) {
-        return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(Map.of("error", e.getMessage()));
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErrorResponse handleForbidden(ForbiddenException e) {
+        log.warn("Forbidden: {}", e.getMessage());
+        return new ErrorResponse(e.getMessage());
     }
 
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleItemUnavailable(ItemUnavailableException e) {
+        log.warn("Item unavailable: {}", e.getMessage());
+        return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleBookingUnavailable(BookingUnavailableException e) {
+        log.warn("Booking unavailable: {}", e.getMessage());
+        return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleMethodArgumentNotValid(MethodArgumentNotValidException e) {
+        log.warn("Validation error: {}", e.getMessage());
+        return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handle(Exception e) {
+        log.warn("Unexpected error:", e);
+        return new ErrorResponse(e.getMessage());
+    }
 }

@@ -1,22 +1,25 @@
 package ru.practicum.shareit.request.dto;
 
-import lombok.*;
-import ru.practicum.shareit.item.dto.ItemCreateDto;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import ru.practicum.shareit.item.dto.ItemResponseDto;
+import ru.practicum.shareit.user.dto.UserDto;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import jakarta.validation.constraints.NotBlank;
 
 @Data
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class ItemRequestDto {
     private Long id;
 
-    @NotBlank(message = "Description cannot be blank")
     private String description;
 
+    private UserDto requester;
+
     private LocalDateTime created;
-    private List<ItemCreateDto> items;
+
+    private List<ItemResponseDto> items;
 }

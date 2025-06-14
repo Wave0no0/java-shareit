@@ -1,47 +1,34 @@
-CREATE table if not exists public.users (
-	id SERIAL PRIMARY KEY,
-	"name" varchar(128) NOT NULL,
-	email varchar(128) NOT NULL,
-	CONSTRAINT users_email_key UNIQUE (email)
+CREATE TABLE IF NOT EXISTS users (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name varchar(255) NOT NULL,
+    email varchar(512) NOT NULL UNIQUE
 );
-
-CREATE table if not exists public.item_request (
-	id SERIAL PRIMARY KEY,
-	description varchar(255) NOT NULL,
-	created timestamp without time zone NOT NULL,
-	author_id int8 NOT NULL,
-	CONSTRAINT item_request_users_fk FOREIGN KEY (author_id) REFERENCES public.users(id) ON DELETE CASCADE
+CREATE TABLE IF NOT EXISTS requests (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    description varchar(255) NOT NULL,
+    requester_id BIGINT NOT NULL REFERENCES users(id),
+    created TIMESTAMP NOT NULL
 );
-
-CREATE table if not exists public.item (
-	id SERIAL PRIMARY KEY,
-	"name" varchar(128) NOT NULL,
-	description varchar(255) NOT NULL,
-	available bool NOT NULL,
-	owner_id int8 NOT NULL,
-	item_request_id int8,
-	CONSTRAINT items_users_fk FOREIGN KEY (owner_id) REFERENCES public.users(id) ON DELETE CASCADE,
-	CONSTRAINT items_item_request_fk FOREIGN KEY (item_request_id) REFERENCES public.item_request(id) ON DELETE SET NULL
+CREATE TABLE IF NOT EXISTS items (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name varchar(255) NOT NULL,
+    description varchar(255) NOT NULL,
+    available boolean NOT NULL,
+    owner_id BIGINT NOT NULL REFERENCES users(id),
+    request_id BIGINT REFERENCES requests(id)
 );
-
-CREATE TABLE if not exists public.booking (
-	id SERIAL PRIMARY KEY,
-	"start_time" timestamp without time zone NOT NULL,
-	"end_time" timestamp without time zone NOT NULL,
-	status varchar(8) NOT NULL,
-	item_id int8 NOT NULL,
-	booker_id int8 NOT NULL,
-	CONSTRAINT booking_check CHECK (status in ('WAITING', 'APPROVED', 'REJECTED', 'CANCELED')),
-	CONSTRAINT booking_items_fk FOREIGN KEY (item_id) REFERENCES public.item(id) ON DELETE CASCADE,
-	CONSTRAINT booking_users_fk FOREIGN KEY (booker_id) REFERENCES public.users(id) ON DELETE CASCADE
+CREATE TABLE IF NOT EXISTS bookings (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    booker_id BIGINT NOT NULL REFERENCES users(id),
+    item_id BIGINT NOT NULL REFERENCES items(id),
+    start_date TIMESTAMP NOT NULL,
+    end_date TIMESTAMP NOT NULL,
+    status varchar(50) NOT NULL
 );
-
-CREATE TABLE if not exists public."comment" (
-	id SERIAL PRIMARY KEY,
-	"text" varchar(255) NOT NULL,
-	created timestamp without time zone NOT NULL,
-	author_id int8 NOT NULL,
-	item_id int8 NOT NULL,
-	CONSTRAINT comments_items_fk FOREIGN KEY (item_id) REFERENCES public.item(id) ON DELETE CASCADE,
-	CONSTRAINT comments_users_fk FOREIGN KEY (author_id) REFERENCES public.users(id) ON DELETE CASCADE
+CREATE TABLE IF NOT EXISTS comments (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    item_id BIGINT NOT NULL REFERENCES items(id),
+    author_id BIGINT NOT NULL REFERENCES users(id),
+    text varchar(255) NOT NULL,
+    created TIMESTAMP NOT NULL
 );

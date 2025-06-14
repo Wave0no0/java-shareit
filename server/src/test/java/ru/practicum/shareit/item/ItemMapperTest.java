@@ -1,95 +1,90 @@
 package ru.practicum.shareit.item;
 
-import org.junit.jupiter.api.BeforeAll;
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
-import ru.practicum.shareit.booking.BookingMapperImpl;
-import ru.practicum.shareit.booking.dto.BookingDto;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import ru.practicum.shareit.booking.model.Booking;
-import ru.practicum.shareit.item.dto.ItemCreateDto;
 import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.item.entity.Item;
-import ru.practicum.shareit.request.entity.ItemRequest;
+import ru.practicum.shareit.item.dto.ItemDtoWithBookings;
+import ru.practicum.shareit.item.dto.ItemSaveDto;
+import ru.practicum.shareit.item.mapper.ItemMapper;
+import ru.practicum.shareit.item.model.Item;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 
-class ItemMapperTest {
+@SpringBootTest
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
+public class ItemMapperTest {
+    private final ItemMapper itemMapper;
 
-    private static final ItemMapper mapper = new ItemMapperImpl();
+    @Test
+    void testMapToItemDto() {
+        Item item = new Item();
+        item.setId(1L);
+        item.setName("Harp");
+        item.setDescription("Fine harp");
+        item.setAvailable(true);
 
-    @BeforeAll
-    static void initBookerMapper() {
-        mapper.bookingMapper = new BookingMapperImpl();
+        ItemDto itemDto = itemMapper.mapToItemDto(item);
+
+        assertThat(itemDto, allOf(
+                hasProperty("id", equalTo(item.getId())),
+                hasProperty("name", equalTo(item.getName())),
+                hasProperty("description", equalTo(item.getDescription())),
+                hasProperty("available", equalTo(item.getAvailable()))
+        ));
     }
 
     @Test
-    void toItemRequest() {
-        ItemCreateDto build = ItemCreateDto.builder()
-                .requestId(1L)
-                .build();
-        ItemRequest itemRequest = mapper.toItemRequest(build);
+    void testMapToItemDtoWithBookings() {
+        Item item = new Item();
+        item.setId(1L);
+        item.setName("Harp");
+        item.setDescription("Fine harp");
+        item.setAvailable(true);
 
-        assertThat(itemRequest).isNotNull();
+        Booking booking1 = new Booking();
+        booking1.setStart(LocalDateTime.of(2025, 2, 5, 15, 0));
+
+        Booking booking2 = new Booking();
+        booking1.setStart(LocalDateTime.of(2025, 5, 5, 15, 0));
+
+        ItemDtoWithBookings itemDtoWithBookings = itemMapper.mapToItemDtoWithBookings(
+                item,
+                booking1,
+                booking2,
+                List.of()
+        );
+
+        assertThat(itemDtoWithBookings, allOf(
+                hasProperty("id", equalTo(item.getId())),
+                hasProperty("name", equalTo(item.getName())),
+                hasProperty("description", equalTo(item.getDescription())),
+                hasProperty("available", equalTo(item.getAvailable())),
+                hasProperty("lastBooking", equalTo(booking1.getStart())),
+                hasProperty("nextBooking", equalTo(booking2.getStart())),
+                hasProperty("comments", empty())
+        ));
     }
 
     @Test
-    void toItemRequest_itemRequestStrategy() {
-        Item item = mapper.toItem(null, null);
-        assertThat(item).isNull();
-    }
+    void testMapToItem() {
+        ItemSaveDto itemSaveDto = new ItemSaveDto();
+        itemSaveDto.setName("Harp");
+        itemSaveDto.setDescription("Fine harp");
+        itemSaveDto.setAvailable(true);
 
-    @Test
-    void toItemDtoForOwner() {
-        ItemDto itemDtoForOwner = mapper.toItemDtoForOwner(null);
-        assertThat(itemDtoForOwner).isNull();
-    }
+        Item item = itemMapper.mapToItem(itemSaveDto);
 
-    @Test
-    void toItem() {
-        Item item = mapper.toItem(null, null);
-        assertThat(item).isNull();
-    }
-
-    @Test
-    void getLastBooking() {
-        Item build = Item.builder()
-                .bookings(Collections.emptyList())
-                .build();
-        BookingDto lastBooking = mapper.getLastBooking(build);
-        assertThat(lastBooking).isNull();
-    }
-
-    @Test
-    void getLastBooking_notEmptyBookings_returnNotNull() {
-        Item build = Item.builder()
-                .bookings(List.of(Booking.builder()
-                        .start(LocalDateTime.now().minusMinutes(1L))
-                        .build()))
-                .build();
-        BookingDto lastBooking = mapper.getLastBooking(build);
-        assertThat(lastBooking).isNotNull();
-    }
-
-    @Test
-    void getNextBooking() {
-        Item build = Item.builder()
-                .bookings(Collections.emptyList())
-                .build();
-        BookingDto nextBooking = mapper.getNextBooking(build);
-        assertThat(nextBooking).isNull();
-    }
-
-    @Test
-    void getNextBooking_notEmptyBookings_returnNull() {
-        Item build = Item.builder()
-                .bookings(List.of(Booking.builder()
-                        .start(LocalDateTime.now().minusMinutes(1L))
-                        .build()))
-                .build();
-        BookingDto nextBooking = mapper.getNextBooking(build);
-        assertThat(nextBooking).isNull();
+        assertThat(item, allOf(
+                hasProperty("name", equalTo(itemSaveDto.getName())),
+                hasProperty("description", equalTo(itemSaveDto.getDescription())),
+                hasProperty("available", equalTo(itemSaveDto.getAvailable()))
+        ));
     }
 }

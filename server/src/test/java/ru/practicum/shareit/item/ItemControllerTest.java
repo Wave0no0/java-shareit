@@ -1,188 +1,162 @@
 package ru.practicum.shareit.item;
 
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.practicum.shareit.item.dto.CommentDto;
-import ru.practicum.shareit.item.dto.ItemCreateDto;
-import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.controller.ItemController;
+import ru.practicum.shareit.item.dto.*;
+import ru.practicum.shareit.item.service.ItemService;
+import ru.practicum.shareit.util.HttpHeaderUtil;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Slf4j
-@WebMvcTest(ItemController.class)
+@WebMvcTest(controllers = ItemController.class)
+@AutoConfigureMockMvc
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
-class ItemControllerTest {
-
-    private final ObjectMapper objectMapper;
-    private final MockMvc mvc;
-
+public class ItemControllerTest {
+    private final ObjectMapper mapper;
     @MockBean
-    private final ItemService service;
+    private final ItemService itemService;
+    private final MockMvc mvc;
+    private ItemDto itemDto;
+    private ItemDtoWithBookings itemDtoWithBookings;
+    private CommentDto commentDto;
 
-    @Test
-    @SneakyThrows
-    void createItem() {
-        ItemDto expected = ItemDto.builder()
-                .id(1L)
-                .name("name")
-                .description("description")
-                .build();
-        ItemCreateDto toSave = ItemCreateDto.builder()
-                .name("name")
-                .description("description")
-                .build();
+    @BeforeEach
+    void setUp() {
+        itemDto = new ItemDto();
+        itemDto.setId(1L);
+        itemDto.setName("Harp");
+        itemDto.setDescription("Fine Harp");
+        itemDto.setAvailable(true);
 
-        when(service.createItem(toSave, 1L)).thenReturn(expected);
+        itemDtoWithBookings = new ItemDtoWithBookings();
+        itemDtoWithBookings.setId(1L);
+        itemDtoWithBookings.setName("Harp");
+        itemDtoWithBookings.setDescription("Fine Harp");
+        itemDtoWithBookings.setAvailable(true);
 
-        String contentAsString = mvc.perform(post("/items")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(toSave))
-                        .header("X-Sharer-User-Id", "1"))
-                .andExpect(status().is2xxSuccessful())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-
-        assertThat(contentAsString).isEqualTo(objectMapper.writeValueAsString(expected));
+        commentDto = new CommentDto();
+        commentDto.setId(1L);
+        commentDto.setText("It's comment");
+        commentDto.setAuthorName("Alice");
+        commentDto.setCreated(LocalDateTime.now());
     }
 
     @Test
-    @SneakyThrows
-    void updateItem() {
-        long itemId = 1L;
-        long userId = 1L;
-        ItemDto expected = ItemDto.builder()
-                .id(1L)
-                .name("name")
-                .description("description")
-                .build();
-        ItemCreateDto toUpdate = ItemCreateDto.builder()
-                .name("name")
-                .description("description")
-                .build();
+    void testAddItem() throws Exception {
+        when(itemService.addItem(anyLong(), any(ItemSaveDto.class)))
+                .thenReturn(itemDto);
 
-        when(service.update(toUpdate, userId, itemId)).thenReturn(expected);
-
-        String contentAsString = mvc.perform(patch("/items/{itemId}", itemId)
+        mvc.perform(post("/items")
+                        .header(HttpHeaderUtil.USER_ID_HEADER, 1)
+                        .content(mapper.writeValueAsString(itemDto))
+                        .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(toUpdate))
-                        .header("X-Sharer-User-Id", "1"))
-                .andExpect(status().is2xxSuccessful())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated())
+                .andExpect(content().json(mapper.writeValueAsString(itemDto)));
 
-        assertThat(contentAsString).isEqualTo(objectMapper.writeValueAsString(expected));
+        verify(itemService, times(1)).addItem(anyLong(), any(ItemSaveDto.class));
     }
 
     @Test
-    @SneakyThrows
-    void getItemById() {
-        long itemId = 1L;
-        long userId = 1L;
-        ItemDto expected = ItemDto.builder()
-                .id(1L)
-                .name("name")
-                .description("description")
-                .build();
+    void testAddComment() throws Exception {
+        when(itemService.addComment(anyLong(), anyLong(), any(CommentSaveDto.class)))
+                .thenReturn(commentDto);
 
-        when(service.getItemById(itemId, userId)).thenReturn(expected);
-
-        String contentAsString = mvc.perform(get("/items/{itemId}", itemId)
+        mvc.perform(post("/items/{itemId}/comment", itemDto.getId())
+                        .header(HttpHeaderUtil.USER_ID_HEADER, 1)
+                        .content(mapper.writeValueAsString(commentDto))
+                        .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Sharer-User-Id", "1"))
-                .andExpect(status().is2xxSuccessful())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated())
+                .andExpect(content().json(mapper.writeValueAsString(commentDto)));
 
-        assertThat(contentAsString).isEqualTo(objectMapper.writeValueAsString(expected));
+        verify(itemService, times(1)).addComment(anyLong(), anyLong(), any(CommentSaveDto.class));
     }
 
     @Test
-    @SneakyThrows
-    void getItemsByUserId() {
-        long userId = 1L;
-        ItemDto expected = ItemDto.builder()
-                .id(1L)
-                .name("name")
-                .description("description")
-                .build();
-        List<ItemDto> expectedList = List.of(expected);
-        when(service.getItemByUserId(userId)).thenReturn(expectedList);
+    void testGetAllUserItems() throws Exception {
+        List<ItemDtoWithBookings> items = List.of(itemDtoWithBookings);
 
-        String contentAsString = mvc.perform(get("/items")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("X-Sharer-User-Id", "1"))
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+        when(itemService.getAllUserItems(anyLong()))
+                .thenReturn(items);
 
-        assertThat(contentAsString).isEqualTo(objectMapper.writeValueAsString(expectedList));
+        mvc.perform(get("/items")
+                        .header(HttpHeaderUtil.USER_ID_HEADER, 1)
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().json(mapper.writeValueAsString(items)));
+
+        verify(itemService, times(1)).getAllUserItems(anyLong());
     }
 
     @Test
-    @SneakyThrows
-    void searchItemByText() {
-        long userId = 1L;
-        ItemDto expected = ItemDto.builder()
-                .id(1L)
-                .name("name")
-                .description("description")
-                .build();
-        List<ItemDto> expectedList = List.of(expected);
-        String text = "text";
-        when(service.searchByText(text, userId)).thenReturn(expectedList);
+    void testGetItemById() throws Exception {
+        when(itemService.getItemById(anyLong(), anyLong()))
+                .thenReturn(itemDtoWithBookings);
 
-        String contentAsString = mvc.perform(get("/items/search")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .param("text", text)
-                        .header("X-Sharer-User-Id", "1"))
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+        mvc.perform(get("/items/{itemId}", itemDtoWithBookings.getId())
+                        .header(HttpHeaderUtil.USER_ID_HEADER, 1)
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().json(mapper.writeValueAsString(itemDtoWithBookings)));
 
-        assertThat(contentAsString).isEqualTo(objectMapper.writeValueAsString(expectedList));
+        verify(itemService, times(1)).getItemById(anyLong(), anyLong());
     }
 
     @Test
-    @SneakyThrows
-    void postComment() {
-        long userId = 1L;
-        long itemId = 1L;
-        CommentDto toSave = CommentDto.builder()
-                .text("text")
-                .build();
-        CommentDto expected = CommentDto.builder()
-                .id(1L)
-                .text("text")
-                .authorName("author")
-                .created(LocalDateTime.now())
-                .build();
-        when(service.createComment(toSave, userId, itemId)).thenReturn(expected);
+    void testSearchItem() throws Exception {
+        List<ItemDto> items = List.of(itemDto);
 
-        String contentAsString = mvc.perform(post("/items/{itemId}/comment", itemId)
+        when(itemService.searchItem(anyString()))
+                .thenReturn(items);
+
+        mvc.perform(get("/items/search")
+                        .param("text", itemDto.getName())
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().json(mapper.writeValueAsString(items)));
+
+        verify(itemService, times(1)).searchItem(anyString());
+    }
+
+    @Test
+    void testUpdateItem() throws Exception {
+        when(itemService.updateItem(anyLong(), anyLong(), any(ItemSaveDto.class)))
+                .thenReturn(itemDto);
+
+        mvc.perform(patch("/items/{itemId}", itemDto.getId())
+                        .header(HttpHeaderUtil.USER_ID_HEADER, 1)
+                        .content(mapper.writeValueAsString(itemDto))
+                        .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(toSave))
-                        .header("X-Sharer-User-Id", "1"))
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().json(mapper.writeValueAsString(itemDto)));
 
-        assertThat(contentAsString).isEqualTo(objectMapper.writeValueAsString(expected));
+        verify(itemService, times(1)).updateItem(anyLong(), anyLong(), any(ItemSaveDto.class));
     }
 }

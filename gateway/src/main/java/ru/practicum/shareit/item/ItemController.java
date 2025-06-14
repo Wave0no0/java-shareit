@@ -1,66 +1,63 @@
 package ru.practicum.shareit.item;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.shareit.item.client.ItemClient;
-import ru.practicum.shareit.item.dto.CommentDto;
-import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.validator.marker.Create;
-import ru.practicum.shareit.validator.marker.Update;
+import ru.practicum.shareit.item.dto.CommentSaveDto;
+import ru.practicum.shareit.item.dto.ItemSaveDto;
+import ru.practicum.shareit.util.HttpHeaderUtil;
+import ru.practicum.shareit.validation.OnCreate;
 
-@Slf4j
-@RestController
+@Controller
 @RequestMapping("/items")
 @RequiredArgsConstructor
+@Slf4j
 public class ItemController {
-
-    private final ItemClient client;
+    private final ItemClient itemClient;
 
     @PostMapping
-    public ResponseEntity<Object> createItem(@RequestBody @Validated(Create.class) ItemDto itemDto,
-                                             @RequestHeader("X-Sharer-User-Id") @Positive long userId) {
-        log.info("Creating item {}", itemDto);
-        return client.createItem(itemDto, userId);
-    }
-
-    @PatchMapping("/{itemId}")
-    public ResponseEntity<Object> updateItem(@RequestBody @Validated(Update.class) ItemDto itemDto,
-                                             @RequestHeader("X-Sharer-User-Id") @Positive long userId,
-                                             @PathVariable @Positive long itemId) {
-        log.info("Updating item {}", itemDto);
-        return client.updateItem(itemId, userId, itemDto);
-    }
-
-    @GetMapping("/{itemId}")
-    public ResponseEntity<Object> getItemById(@PathVariable @Positive long itemId,
-                                              @RequestHeader("X-Sharer-User-Id") @Positive long userId) {
-        log.info("Getting item id={}", itemId);
-        return client.getItem(itemId, userId);
-    }
-
-    @GetMapping
-    public ResponseEntity<Object> getItemsByUserId(@RequestHeader("X-Sharer-User-Id") @Positive long userId) {
-        log.info("Getting items user id={}", userId);
-        return client.getItems(userId);
-    }
-
-    @GetMapping("/search")
-    public ResponseEntity<Object> searchItemByText(@RequestParam(required = false) String text,
-                                                   @RequestHeader("X-Sharer-User-Id") @Positive long userId) {
-        log.info("Searching items by text={}", text);
-        return client.getItemsByText(userId, text);
+    public ResponseEntity<Object> addItem(@RequestHeader(HttpHeaderUtil.USER_ID_HEADER) Long userId,
+                                          @Validated(OnCreate.class) @RequestBody ItemSaveDto itemDto) {
+        log.info("POST /items, itemDto={}, userId={}", itemDto, userId);
+        return itemClient.addItem(userId, itemDto);
     }
 
     @PostMapping("/{itemId}/comment")
-    public ResponseEntity<Object> postComment(@RequestBody @Valid CommentDto dto,
-                                              @RequestHeader("X-Sharer-User-Id") @Positive long userId,
-                                              @PathVariable @Positive long itemId) {
-        log.info("Posting comment {} for item id{} by user id{}", dto, itemId, userId);
-        return client.postComment(userId, dto, itemId);
+    public ResponseEntity<Object> addComment(@RequestHeader(HttpHeaderUtil.USER_ID_HEADER) Long userId,
+                                             @PathVariable Long itemId,
+                                             @Valid @RequestBody CommentSaveDto commentDto) {
+        log.info("POST /items/comments, commentDto={}, userId={}, itemId={}", commentDto, userId, itemId);
+        return itemClient.addComment(userId, itemId, commentDto);
+    }
+
+    @GetMapping
+    public ResponseEntity<Object> getAllUserItems(@RequestHeader(HttpHeaderUtil.USER_ID_HEADER) Long userId) {
+        log.info("GET /items, userId={}", userId);
+        return itemClient.getAllUserItems(userId);
+    }
+
+    @GetMapping("/{itemId}")
+    public ResponseEntity<Object> getItemById(@RequestHeader(HttpHeaderUtil.USER_ID_HEADER) Long userId,
+                                              @PathVariable Long itemId) {
+        log.info("GET /items/{itemId}, itemId={}", itemId);
+        return itemClient.getItemById(userId, itemId);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<Object> searchItem(@RequestParam String text) {
+        log.info("GET /items/search, text={}", text);
+        return itemClient.searchItem(text);
+    }
+
+    @PatchMapping("/{itemId}")
+    public ResponseEntity<Object> updateItem(@RequestHeader(HttpHeaderUtil.USER_ID_HEADER) Long userId,
+                                             @PathVariable Long itemId,
+                                             @RequestBody ItemSaveDto itemDto) {
+        log.info("PATCH /items, itemId={}, userId={}", itemId, userId);
+        return itemClient.updateItem(userId, itemId, itemDto);
     }
 }
