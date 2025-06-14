@@ -43,6 +43,9 @@ public abstract class ItemMapper {
 
     abstract List<CommentDto> toCommentDtos(List<Comment> comments);
 
+    @Mapping(target = "requestId", source = "itemRequest.id")
+    public abstract ItemCreateDto toCreateDto(Item item);
+
     @Named("itemRequestStrategy")
     protected ItemRequest toItemRequest(ItemCreateDto dto) {
         if (dto == null || dto.getRequestId() == null) {
@@ -52,7 +55,6 @@ public abstract class ItemMapper {
             request.setId(dto.getRequestId());
             return request;
         }
-
     }
 
     protected BookingDto getLastBooking(Item item) {
@@ -67,7 +69,7 @@ public abstract class ItemMapper {
                 else return bookingMapper.toBookingDto(bookings.get(i - 1));
             }
         }
-        return bookingMapper.toBookingDtoForItem(bookings.getLast());
+        return bookingMapper.toBookingDtoForItem(bookings.get(bookings.size() - 1));
     }
 
     protected BookingDto getNextBooking(Item item) {

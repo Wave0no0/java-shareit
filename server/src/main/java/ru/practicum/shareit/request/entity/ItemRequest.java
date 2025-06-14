@@ -2,9 +2,12 @@ package ru.practicum.shareit.request.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import ru.practicum.shareit.item.entity.Item;
 import ru.practicum.shareit.user.entity.User;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "item_request")
@@ -28,4 +31,7 @@ public class ItemRequest {
 
     @Column(nullable = false)
     private LocalDateTime created;
+
+    @OneToMany(mappedBy = "request", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Item> items = new ArrayList<>();
 }
