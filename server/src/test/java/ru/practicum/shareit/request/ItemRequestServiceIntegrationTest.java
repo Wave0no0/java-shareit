@@ -1,108 +1,101 @@
 package ru.practicum.shareit.request;
 
-import org.checkerframework.checker.units.qual.A;
-import org.junit.jupiter.api.BeforeEach;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.shareit.item.ItemRepository;
-import ru.practicum.shareit.item.entity.Item;
+import ru.practicum.shareit.DBIntegrationTestBase;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
-import ru.practicum.shareit.request.dto.ItemRequestResponseDto;
-import ru.practicum.shareit.user.UserRepository;
-import ru.practicum.shareit.user.entity.User;
+import ru.practicum.shareit.request.entity.ItemRequest;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ActiveProfiles("test")
-@SpringBootTest
 @Transactional
-class ItemRequestServiceIntegrationTest {
+@SpringBootTest
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
+class ItemRequestServiceIntegrationTest extends DBIntegrationTestBase {
 
-    @Autowired
-    private ItemRequestService requestService;
+    private final ItemRequestService service;
+    private final EntityManager entityManager;
 
-    @Autowired
-    private UserRepository userRepository;
+    @Test
+    void createRequest() {
+        ItemRequestDto dto = ItemRequestDto.builder()
+                .description("test")
+                .build();
 
-    @Autowired
-    private ItemRepository itemRepository;
+        ItemRequestDto returned = service.createRequest(dto, 1L);
 
-    @Autowired
-    private ItemRequestRepository requestRepository;
+        TypedQuery<ItemRequest> query = entityManager.createQuery("select r from ItemRequest r where r.id = :id",
+                ItemRequest.class);
+        ItemRequest saved = query
+                .setParameter("id", returned.getId())
+                .getSingleResult();
 
-    private User requestor;
-    private User owner;
-
-    @BeforeEach
-    void setUp() {
-        requestor = userRepository.save(new User(null, "Requester", "requester@example.com"));
-        owner = userRepository.save(new User(null, "Owner", "owner@example.com"));
+        assertThat(saved)
+                .hasFieldOrPropertyWithValue("description", "test");
+        assertThat(saved.getCreated()).isBefore(LocalDateTime.now()).isAfter(LocalDateTime.now().minusMinutes(1));
     }
 
     @Test
-    void createAndGetOwnRequests() {
-        ItemRequestDto dto = new ItemRequestDto();
-        dto.setDescription("Need a drill");
+    void getOwnersRequests() {
+        List<ItemRequestDto> ownersRequestsUser1 = service.getOwnersRequests(1L);
+        assertThat(ownersRequestsUser1).hasSize(2);
+        for (ItemRequestDto dto : ownersRequestsUser1) {
+            if (dto.getId().equals(1L)) {
+                assertThat(dto.getItems()).hasSize(2);
+            }
+        }
 
-        ItemRequestDto created = requestService.create(requestor.getId(), dto);
-        assertThat(created.getDescription()).isEqualTo("Need a drill");
+        List<ItemRequestDto> ownersRequestsUser2 = service.getOwnersRequests(2L);
+        assertThat(ownersRequestsUser2).hasSize(1).first()
+                .hasFieldOrPropertyWithValue("description", "desc3")
+                .hasFieldOrPropertyWithValue("id", 3L);
+        assertThat(ownersRequestsUser2.getFirst().getItems()).hasSize(1).first()
+                .hasFieldOrPropertyWithValue("id", 2L);
 
-        List<ItemRequestResponseDto> requests = requestService.getOwnRequests(requestor.getId());
-        assertThat(requests).hasSize(1);
-        assertThat(requests.get(0).getDescription()).isEqualTo("Need a drill");
-        assertThat(requests.get(0).getItems()).isEmpty();
+        List<ItemRequestDto> ownersRequests3 = service.getOwnersRequests(3L);
+        assertThat(ownersRequests3).isEmpty();
     }
 
     @Test
-    void getAllRequests_shouldReturnOtherUsersRequests() {
-        // Запрос от requestor
-        ItemRequestDto dto = new ItemRequestDto();
-        dto.setDescription("Need a ladder");
-        ItemRequestDto created = requestService.create(requestor.getId(), dto);
+    void getRequestById() {
+        long requestId = 1L;
+        long userId = 1L;
+        ItemRequestDto requestById = service.getRequestById(requestId, userId);
 
-        // Вещь от другого пользователя в ответ на запрос
-        ItemRequest request = requestRepository.findById(created.getId()).orElseThrow();
-        Item item = new Item();
-        item.setName("Ladder");
-        item.setDescription("Big ladder");
-        item.setAvailable(true);
-        item.setOwner(owner);
-        item.setRequest(request);
-        itemRepository.save(item);
-
-        List<ItemRequestResponseDto> results = requestService.getAllRequests(owner.getId());
-        assertThat(results).hasSize(1);
-        assertThat(results.get(0).getItems()).hasSize(1);
-        assertThat(results.get(0).getItems().get(0).getName()).isEqualTo("Ladder");
+        assertThat(requestById)
+                .hasFieldOrPropertyWithValue("id", 1L)
+                .hasFieldOrPropertyWithValue("description", "desc1")
+                .hasFieldOrPropertyWithValue("created", LocalDateTime.parse("2025-05-25T19:00"));
     }
 
     @Test
-    void getById_shouldReturnRequestWithItems() {
-        // Создаем запрос
-        ItemRequestDto dto = new ItemRequestDto();
-        dto.setDescription("Need something");
-        ItemRequestDto created = requestService.create(requestor.getId(), dto);
-        ItemRequest request = requestRepository.findById(created.getId()).orElseThrow();
+    void getAllRequests() {
+        long userId = 1L;
+        List<ItemRequestDto> allRequestsUser1 = service.getAllRequests(userId);
 
-        // Добавляем вещь в ответ
-        Item item = new Item();
-        item.setName("Hammer");
-        item.setDescription("Heavy hammer");
-        item.setAvailable(true);
-        item.setOwner(owner);
-        item.setRequest(request);
-        itemRepository.save(item);
+        assertThat(allRequestsUser1).hasSize(1);
+        assertThat(allRequestsUser1).last().hasFieldOrPropertyWithValue("items", null);
 
-        // Проверяем получение запроса
-        ItemRequestResponseDto result = requestService.getById(owner.getId(), request.getId());
-        assertThat(result).isNotNull();
-        assertThat(result.getItems()).hasSize(1);
-        assertThat(result.getItems().get(0).getName()).isEqualTo("Hammer");
+        userId = 2L;
+        List<ItemRequestDto> allRequestsUser2 = service.getAllRequests(userId);
+
+        assertThat(allRequestsUser2).hasSize(2);
+        assertThat(allRequestsUser2).last().hasFieldOrPropertyWithValue("items", null);
+        assertThat(allRequestsUser2).first().hasFieldOrPropertyWithValue("items", null);
+
+        userId = 3L;
+        List<ItemRequestDto> allRequestsUser3 = service.getAllRequests(userId);
+
+        assertThat(allRequestsUser3).hasSize(3);
+        assertThat(allRequestsUser3).last().hasFieldOrPropertyWithValue("items", null);
+        assertThat(allRequestsUser3).first().hasFieldOrPropertyWithValue("items", null);
     }
 }

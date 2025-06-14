@@ -29,7 +29,6 @@ public class UserService {
     }
 
     public UserDto create(UserDto userDto) {
-        // Проверка на дублирующий email
         boolean emailExists = repository.findAll().stream()
                 .anyMatch(u -> u.getEmail().equalsIgnoreCase(userDto.getEmail()));
         if (emailExists) {
@@ -44,7 +43,6 @@ public class UserService {
         User existing = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
-        // Проверка на дублирующий email (если он меняется)
         if (userDto.getEmail() != null &&
                 !userDto.getEmail().equalsIgnoreCase(existing.getEmail()) &&
                 repository.findAll().stream()

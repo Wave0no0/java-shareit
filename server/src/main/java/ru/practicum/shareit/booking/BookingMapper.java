@@ -1,38 +1,27 @@
 package ru.practicum.shareit.booking;
 
-import org.springframework.stereotype.Component;
+import org.mapstruct.Builder;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import ru.practicum.shareit.booking.dto.BookingCreateDto;
 import ru.practicum.shareit.booking.dto.BookingDto;
-import ru.practicum.shareit.item.ItemMapper;
-import ru.practicum.shareit.user.UserMapper;
+import ru.practicum.shareit.booking.model.Booking;
 
-@Component
-public class BookingMapper {
+@Mapper(componentModel = "spring", builder = @Builder(disableBuilder = true))
+public interface BookingMapper {
 
-    private final UserMapper userMapper;
-    private final ItemMapper itemMapper;
+    @Mapping(target = "item.comments", ignore = true)
+    @Mapping(target = "item.lastBooking", ignore = true)
+    @Mapping(target = "item.nextBooking", ignore = true)
+    BookingDto toBookingDto(Booking booking);
 
-    public BookingMapper(UserMapper userMapper, ItemMapper itemMapper) {
-        this.userMapper = userMapper;
-        this.itemMapper = itemMapper;
-    }
+    @Mapping(target = "item", ignore = true)
+    BookingDto toBookingDtoForItem(Booking booking);
 
-    public BookingDto toDto(Booking booking) {
-        BookingDto dto = new BookingDto();
-        dto.setId(booking.getId());
-        dto.setStart(booking.getStart());
-        dto.setEnd(booking.getEnd());
-        dto.setStatus(booking.getStatus());
-        dto.setItem(itemMapper.toDto(booking.getItem()));
-        dto.setBooker(userMapper.toDto(booking.getBooker()));
-        return dto;
-    }
 
-    public Booking fromCreateDto(BookingCreateDto dto) {
-        Booking booking = new Booking();
-        booking.setStart(dto.getStart());
-        booking.setEnd(dto.getEnd());
-        booking.setStatus(BookingStatus.WAITING);
-        return booking;
-    }
+    @Mapping(target = "item.id", source = "dto.itemId")
+    @Mapping(target = "booker.id", source = "bookerId")
+    @Mapping(target = "item.name", source = "itemName")
+    @Mapping(target = "status", expression = "java( ru.practicum.shareit.booking.BookingStatus.WAITING)")
+    Booking toBooking(BookingCreateDto dto, Long bookerId, String itemName);
 }

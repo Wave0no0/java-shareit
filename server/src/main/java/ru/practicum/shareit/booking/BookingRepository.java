@@ -1,36 +1,24 @@
 package ru.practicum.shareit.booking;
 
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-import ru.practicum.shareit.item.entity.Item;
-import ru.practicum.shareit.user.entity.User;
+import org.springframework.stereotype.Repository;
+import ru.practicum.shareit.booking.model.Booking;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
+@Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
+    @Fetch(value = FetchMode.JOIN)
+    List<Booking> findByItemIdOrderByStart(long itemId);
 
-    List<Booking> findByBookerOrderByStartDesc(User booker);
+    @EntityGraph(attributePaths = {"item", "booker"})
+    List<Booking> findByBookerId(long bookerId);
 
-    List<Booking> findByItemOwnerOrderByStartDesc(User owner);
+    List<Booking> findByBookerIdAndItemId(long bookerId, long itemId);
 
-    List<Booking> findByBookerAndStartBeforeAndEndAfter(User booker, LocalDateTime start, LocalDateTime end);
-
-    List<Booking> findByItemAndBookerAndStatusAndEndBefore(
-            Item item,
-            User booker,
-            BookingStatus status,
-            LocalDateTime now
-    );
-
-    List<Booking> findByItem_IdIn(List<Long> itemIds);
-
-    List<Booking> findByBookerIdOrderByStartDesc(Long bookerId);
-
-    List<Booking> findByItemOwnerIdOrderByStartDesc(Long ownerId);
-
-    boolean existsByBookerIdAndItemIdAndEndBefore(Long bookerId, Long itemId, LocalDateTime before);
-
-    boolean existsByBookerIdAndItemIdAndStatusAndEndBefore(
-            Long bookerId, Long itemId, BookingStatus status, LocalDateTime end
-    );
+    @EntityGraph(attributePaths = {"item", "booker"})
+    List<Booking> findByItemOwnerId(long ownerId);
 }

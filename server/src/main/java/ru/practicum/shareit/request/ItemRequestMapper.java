@@ -1,28 +1,18 @@
 package ru.practicum.shareit.request;
 
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
-import ru.practicum.shareit.request.ItemRequest;
-import ru.practicum.shareit.user.entity.User;
+import ru.practicum.shareit.request.entity.ItemRequest;
 
-import java.time.LocalDateTime;
+@Mapper(componentModel = "spring")
+public interface ItemRequestMapper {
 
-@Component
-public class ItemRequestMapper {
+    @Mapping(ignore = true, target = "items")
+    ItemRequestDto toDto(ItemRequest request);
 
-    public ItemRequest toEntity(ItemRequestDto dto, User requestor) {
-        return ItemRequest.builder()
-                .description(dto.getDescription())
-                .requestor(requestor)
-                .created(LocalDateTime.now())
-                .build();
-    }
+    ItemRequestDto toDtoWithItems(ItemRequest request);
 
-    public ItemRequestDto toDto(ItemRequest entity) {
-        ItemRequestDto dto = new ItemRequestDto();
-        dto.setId(entity.getId());
-        dto.setDescription(entity.getDescription());
-        dto.setCreated(entity.getCreated());
-        return dto;
-    }
+    @Mapping(target = "requestor.id", source = "userId")
+    ItemRequest toItemRequest(ItemRequestDto dto, Long userId);
 }

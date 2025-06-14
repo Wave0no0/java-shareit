@@ -1,13 +1,16 @@
 package ru.practicum.shareit.request;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-import ru.practicum.shareit.request.ItemRequest;
+import org.springframework.stereotype.Repository;
+import ru.practicum.shareit.request.entity.ItemRequest;
 
 import java.util.List;
 
+@Repository
 public interface ItemRequestRepository extends JpaRepository<ItemRequest, Long> {
+    @EntityGraph(attributePaths = "items")
+    List<ItemRequest> findAllByAuthorId(long authorId);
 
-    List<ItemRequest> findByRequestorIdOrderByCreatedDesc(Long userId);
-
-    List<ItemRequest> findByRequestorIdNotOrderByCreatedDesc(Long userId);
+    List<ItemRequest> findAllByAuthorIdNotOrderByCreated(long authorId);
 }

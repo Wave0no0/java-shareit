@@ -8,18 +8,20 @@ import ru.practicum.shareit.user.entity.User;
 public class UserMapper {
 
     public UserDto toDto(User user) {
-        UserDto dto = new UserDto();
-        dto.setId(user.getId());
-        dto.setName(user.getName());
-        dto.setEmail(user.getEmail());
-        return dto;
+        return UserDto.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .build();
     }
 
     public User fromDto(UserDto dto) {
-        User user = new User();
-        user.setId(dto.getId()); // может быть null при создании
-        user.setName(dto.getName());
-        user.setEmail(dto.getEmail());
-        return user;
+        return User.builder()
+                .id(dto.getId())
+                .name(dto.getName())
+                .email(dto.getEmail())
+                .build();
     }
 }
+
+

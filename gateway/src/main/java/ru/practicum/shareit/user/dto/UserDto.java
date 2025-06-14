@@ -2,20 +2,20 @@ package ru.practicum.shareit.user.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import ru.practicum.shareit.validator.NotBlankCouldBeNull;
+import ru.practicum.shareit.validator.marker.Create;
+import ru.practicum.shareit.validator.marker.Update;
 
 @Data
 public class UserDto {
 
-    private Long id;
-
-    @NotBlank(message = "Name must not be blank")
-    @Size(max = 128, message = "Name must be at most 128 characters")
+    @NotBlankCouldBeNull(groups = Update.class)
+    @NotBlank(groups = Create.class)
     private String name;
 
-    @NotBlank(message = "Email must not be blank")
-    @Email(message = "Email must be valid")
-    @Size(max = 128, message = "Email must be at most 128 characters")
+    @Email(groups = {Create.class, Update.class})
+    @NotNull(groups = Create.class)
     private String email;
 }

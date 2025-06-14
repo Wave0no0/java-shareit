@@ -1,60 +1,86 @@
 package ru.practicum.shareit.item;
 
-import org.springframework.stereotype.Component;
-import ru.practicum.shareit.booking.Booking;
-import ru.practicum.shareit.item.dto.BookingDtoLite;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Named;
+import org.springframework.beans.factory.annotation.Autowired;
+import ru.practicum.shareit.booking.BookingMapper;
+import ru.practicum.shareit.booking.dto.BookingDto;
+import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.item.dto.CommentDto;
+import ru.practicum.shareit.item.dto.ItemCreateDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.entity.Comment;
 import ru.practicum.shareit.item.entity.Item;
+import ru.practicum.shareit.request.entity.ItemRequest;
 import ru.practicum.shareit.user.entity.User;
-import ru.practicum.shareit.request.ItemRequest;
 
-@Component
-public class ItemMapper {
+import java.time.LocalDateTime;
+import java.util.List;
 
-    public Item fromDto(ItemDto dto, User owner, ItemRequest request) {
-        Item item = new Item();
-        item.setId(dto.getId());
-        item.setName(dto.getName());
-        item.setDescription(dto.getDescription());
-        item.setAvailable(dto.getAvailable());
-        item.setOwner(owner);
-        item.setRequest(request);
-        return item;
-    }
+@Mapper(componentModel = "spring", uses = BookingMapper.class)
+public abstract class ItemMapper {
 
-    public void update(Item item, ItemDto patch) {
-        if (patch.getName() != null) item.setName(patch.getName());
-        if (patch.getDescription() != null) item.setDescription(patch.getDescription());
-        if (patch.getAvailable() != null) item.setAvailable(patch.getAvailable());
-    }
+    @Autowired
+    protected BookingMapper bookingMapper;
 
-    public CommentDto toCommentDto(Comment comment) {
-        CommentDto dto = new CommentDto();
-        dto.setId(comment.getId());
-        dto.setText(comment.getText());
-        dto.setAuthorName(comment.getAuthor().getName());
-        dto.setCreated(comment.getCreated());
-        return dto;
-    }
+    abstract ItemDto toItemDto(Item item);
 
-    public BookingDtoLite toBookingDtoLite(Booking booking) {
-        BookingDtoLite dto = new BookingDtoLite();
-        dto.setId(booking.getId());
-        dto.setBookerId(booking.getBooker().getId());
-        return dto;
-    }
+    @Mapping(target = "lastBooking", expression = "java(this.getLastBooking(item))")
+    @Mapping(target = "nextBooking", expression = "java(this.getNextBooking(item))")
+    @Mapping(target = "id", source = "item.id")
+    abstract ItemDto toItemDtoForOwner(Item item);
 
-    public ItemDto toDto(Item item) {
-        ItemDto dto = new ItemDto();
-        dto.setId(item.getId());
-        dto.setName(item.getName());
-        dto.setDescription(item.getDescription());
-        dto.setAvailable(item.getAvailable());
-        if (item.getRequest() != null) {
-            dto.setRequestId(item.getRequest().getId());
+    @Mapping(target = "owner.id", source = "ownerId")
+    @Mapping(target = "itemRequest", source = "dto", qualifiedByName = "itemRequestStrategy")
+    abstract Item toItem(ItemCreateDto dto, Long ownerId);
+
+    @Mapping(ignore = true, target = "id")
+    abstract Comment toComment(CommentDto dto, Item item, User author);
+
+    @Mapping(target = "authorName", source = "author.name")
+    abstract CommentDto toCommentDto(Comment comment);
+
+    abstract List<CommentDto> toCommentDtos(List<Comment> comments);
+
+    @Named("itemRequestStrategy")
+    protected ItemRequest toItemRequest(ItemCreateDto dto) {
+        if (dto == null || dto.getRequestId() == null) {
+            return null;
+        } else {
+            ItemRequest request = new ItemRequest();
+            request.setId(dto.getRequestId());
+            return request;
         }
-        return dto;
+
+    }
+
+    protected BookingDto getLastBooking(Item item) {
+        List<Booking> bookings = item.getBookings();
+        if (bookings.isEmpty()) {
+            return null;
+        }
+        LocalDateTime now = LocalDateTime.now();
+        for (int i = 0; i < bookings.size(); i++) {
+            if (bookings.get(i).getStart().isAfter(now)) {
+                if (i == 0) return null;
+                else return bookingMapper.toBookingDto(bookings.get(i - 1));
+            }
+        }
+        return bookingMapper.toBookingDtoForItem(bookings.getLast());
+    }
+
+    protected BookingDto getNextBooking(Item item) {
+        List<Booking> bookings = item.getBookings();
+        if (bookings.isEmpty()) {
+            return null;
+        }
+        LocalDateTime now = LocalDateTime.now();
+        for (Booking booking : bookings) {
+            if (booking.getStart().isAfter(now)) {
+                return bookingMapper.toBookingDtoForItem(booking);
+            }
+        }
+        return null;
     }
 }

@@ -1,17 +1,18 @@
 package ru.practicum.shareit.item.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import lombok.experimental.Accessors;
+import lombok.NoArgsConstructor;
 
 @Data
-@Accessors(chain = true)
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class ItemCreateDto {
-    @NotBlank
+    private Long id;
     private String name;
-    @NotBlank
     private String description;
-    @NotNull
     private Boolean available;
+    private Long requestId;
 }
