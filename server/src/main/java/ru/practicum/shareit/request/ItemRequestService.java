@@ -31,7 +31,7 @@ public class ItemRequestService {
         if (!userRepository.existsById(userId)) {
             throw new NotFoundException("There is no user with id=" + userId);
         }
-        List<ItemRequest> usersRequests = requestRepository.findAllByAuthorId(userId);
+        List<ItemRequest> usersRequests = requestRepository.findAllByRequestor_Id(userId);
         return usersRequests.stream()
                 .map(mapper::toDtoWithItems)
                 .toList();
@@ -50,7 +50,7 @@ public class ItemRequestService {
         if (!userRepository.existsById(userId)) {
             throw new NotFoundException("There is no user with id=" + userId);
         }
-        return requestRepository.findAllByAuthorIdNotOrderByCreated(userId).stream()
+        return requestRepository.findAllByRequestor_IdNotOrderByCreated(userId).stream()
                 .map(mapper::toDto)
                 .toList();
     }

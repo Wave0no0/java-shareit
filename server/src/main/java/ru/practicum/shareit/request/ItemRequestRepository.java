@@ -10,7 +10,7 @@ import java.util.List;
 @Repository
 public interface ItemRequestRepository extends JpaRepository<ItemRequest, Long> {
     @EntityGraph(attributePaths = "items")
-    List<ItemRequest> findAllByAuthorId(long authorId);
+    List<ItemRequest> findAllByRequestor_Id(long requestorId);
 
-    List<ItemRequest> findAllByAuthorIdNotOrderByCreated(long authorId);
+    List<ItemRequest> findAllByRequestor_IdNotOrderByCreated(long requestorId);
 }
