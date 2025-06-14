@@ -8,6 +8,7 @@ import ru.practicum.shareit.item.dto.ItemCreateDto;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.request.entity.ItemRequest;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,6 +22,7 @@ public abstract class ItemRequestMapper {
     public abstract ItemRequestDto toDto(ItemRequest request);
 
     @Mapping(target = "requestor.id", source = "userId")
+    @Mapping(target = "created", expression = "java(java.time.LocalDateTime.now())")
     public abstract ItemRequest toItemRequest(ItemRequestDto dto, Long userId);
 
     public ItemRequestDto toDtoWithItems(ItemRequest request) {
