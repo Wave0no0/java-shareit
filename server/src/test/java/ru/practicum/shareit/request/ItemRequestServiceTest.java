@@ -76,9 +76,8 @@ class ItemRequestServiceTest {
         ItemRequestDto expected = new ItemRequestDto();
 
         when(userRepository.existsById(userId)).thenReturn(true);
-        when(itemRequestRepository.findAllByAuthorId(userId)).thenReturn(List.of(returned));
+        when(itemRequestRepository.findAllByRequestor_Id(userId)).thenReturn(List.of(returned));
         when(mapper.toDtoWithItems(returned)).thenReturn(expected);
-
 
         List<ItemRequestDto> actual = service.getOwnersRequests(userId);
 
@@ -142,9 +141,8 @@ class ItemRequestServiceTest {
         ItemRequestDto expected = new ItemRequestDto();
 
         when(userRepository.existsById(userId)).thenReturn(true);
-        when(itemRequestRepository.findAllByAuthorIdNotOrderByCreated(userId)).thenReturn(List.of(returned));
+        when(itemRequestRepository.findAllByRequestor_IdNotOrderByCreated(userId)).thenReturn(List.of(returned));
         when(mapper.toDto(returned)).thenReturn(expected);
-
 
         List<ItemRequestDto> actual = service.getAllRequests(userId);
 
