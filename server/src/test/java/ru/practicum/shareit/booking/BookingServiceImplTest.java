@@ -173,7 +173,9 @@ public class BookingServiceImplTest {
         ItemDto item = itemService.addItem(user1.getId(), itemDto);
 
         bookingDto.setItemId(item.getId());
-        bookingDto.setStart(LocalDateTime.now().minusDays(1));
+        bookingDto.setStart(LocalDateTime.now().minusHours(1));
+        bookingDto.setEnd(LocalDateTime.now().plusHours(1));
+
         BookingDto addedBooking = bookingService.addBooking(user2.getId(), bookingDto);
 
         List<BookingDto> sourceBookings = List.of(addedBooking);
@@ -181,13 +183,14 @@ public class BookingServiceImplTest {
         List<BookingDto> targetBookings = bookingService.getUserBookings(user2.getId(), BookingState.CURRENT);
 
         assertThat(targetBookings, hasSize(sourceBookings.size()));
-        assertThat(targetBookings.getFirst(), allOf(
+        assertThat(targetBookings.get(0), allOf(
                 hasProperty("id", notNullValue()),
                 hasProperty("start", equalTo(bookingDto.getStart())),
                 hasProperty("end", equalTo(bookingDto.getEnd())),
                 hasProperty("status", equalTo(BookingStatus.WAITING))
         ));
     }
+
 
     @Test
     void testGetPastUserBookings() {
@@ -219,7 +222,10 @@ public class BookingServiceImplTest {
         UserDto user2 = userService.addUser(userDto2);
         ItemDto item = itemService.addItem(user1.getId(), itemDto);
 
+        bookingDto.setStart(LocalDateTime.now().plusDays(1));
+        bookingDto.setEnd(LocalDateTime.now().plusDays(2));
         bookingDto.setItemId(item.getId());
+
         BookingDto addedBooking = bookingService.addBooking(user2.getId(), bookingDto);
 
         List<BookingDto> sourceBookings = List.of(addedBooking);
@@ -227,7 +233,7 @@ public class BookingServiceImplTest {
         List<BookingDto> targetBookings = bookingService.getUserBookings(user2.getId(), BookingState.FUTURE);
 
         assertThat(targetBookings, hasSize(sourceBookings.size()));
-        assertThat(targetBookings.getFirst(), allOf(
+        assertThat(targetBookings.get(0), allOf(
                 hasProperty("id", notNullValue()),
                 hasProperty("start", equalTo(bookingDto.getStart())),
                 hasProperty("end", equalTo(bookingDto.getEnd())),
@@ -310,7 +316,9 @@ public class BookingServiceImplTest {
         ItemDto item = itemService.addItem(user1.getId(), itemDto);
 
         bookingDto.setItemId(item.getId());
-        bookingDto.setStart(LocalDateTime.now().minusDays(1));
+        bookingDto.setStart(LocalDateTime.now().minusHours(1)); // началось час назад
+        bookingDto.setEnd(LocalDateTime.now().plusHours(1));    // закончится через час
+
         BookingDto addedBooking = bookingService.addBooking(user2.getId(), bookingDto);
 
         List<BookingDto> sourceBookings = List.of(addedBooking);
@@ -318,7 +326,7 @@ public class BookingServiceImplTest {
         List<BookingDto> targetBookings = bookingService.getOwnerBookings(user1.getId(), BookingState.CURRENT);
 
         assertThat(targetBookings, hasSize(sourceBookings.size()));
-        assertThat(targetBookings.getFirst(), allOf(
+        assertThat(targetBookings.get(0), allOf(
                 hasProperty("id", notNullValue()),
                 hasProperty("start", equalTo(bookingDto.getStart())),
                 hasProperty("end", equalTo(bookingDto.getEnd())),
@@ -357,6 +365,9 @@ public class BookingServiceImplTest {
         ItemDto item = itemService.addItem(user1.getId(), itemDto);
 
         bookingDto.setItemId(item.getId());
+        bookingDto.setStart(LocalDateTime.now().plusDays(1));  // старт через день
+        bookingDto.setEnd(LocalDateTime.now().plusDays(2));    // конец через два дня
+
         BookingDto addedBooking = bookingService.addBooking(user2.getId(), bookingDto);
 
         List<BookingDto> sourceBookings = List.of(addedBooking);
@@ -364,7 +375,7 @@ public class BookingServiceImplTest {
         List<BookingDto> targetBookings = bookingService.getOwnerBookings(user1.getId(), BookingState.FUTURE);
 
         assertThat(targetBookings, hasSize(sourceBookings.size()));
-        assertThat(targetBookings.getFirst(), allOf(
+        assertThat(targetBookings.get(0), allOf(
                 hasProperty("id", notNullValue()),
                 hasProperty("start", equalTo(bookingDto.getStart())),
                 hasProperty("end", equalTo(bookingDto.getEnd())),

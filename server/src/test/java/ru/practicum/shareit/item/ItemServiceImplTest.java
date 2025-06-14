@@ -30,6 +30,7 @@ import java.util.List;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Transactional
@@ -157,10 +158,16 @@ public class ItemServiceImplTest {
         ItemDto addedItem = itemService.addItem(user1.getId(), itemDto1);
 
         bookingDto1.setItemId(addedItem.getId());
-        bookingDto2.setItemId(addedItem.getId());
+        bookingDto1.setStart(LocalDateTime.now().minusDays(2));
+        bookingDto1.setEnd(LocalDateTime.now().minusDays(1));
+        BookingDto pastBooking = bookingService.addBooking(user2.getId(), bookingDto1);
+        bookingService.approveBooking(user1.getId(), pastBooking.getId(), true);
 
-        bookingService.addBooking(user2.getId(), bookingDto1);
-        bookingService.addBooking(user2.getId(), bookingDto2);
+        bookingDto2.setItemId(addedItem.getId());
+        bookingDto2.setStart(LocalDateTime.now().plusDays(1));
+        bookingDto2.setEnd(LocalDateTime.now().plusDays(2));
+        BookingDto futureBooking = bookingService.addBooking(user2.getId(), bookingDto2);
+        bookingService.approveBooking(user1.getId(), futureBooking.getId(), true);
 
         ItemDtoWithBookings itemDto = itemService.getItemById(user1.getId(), addedItem.getId());
 
@@ -278,15 +285,19 @@ public class ItemServiceImplTest {
         UserDto user2 = userService.addUser(userDto2);
         ItemDto item1 = itemService.addItem(user1.getId(), itemDto1);
         ItemDto item2 = itemService.addItem(user1.getId(), itemDto2);
+
         bookingDto1.setItemId(item1.getId());
         bookingService.addBooking(user2.getId(), bookingDto1);
+
         bookingDto2.setItemId(item2.getId());
         BookingDto addedBooking2 = bookingService.addBooking(user2.getId(), bookingDto2);
         bookingService.approveBooking(user1.getId(), addedBooking2.getId(), true);
 
         assertThrows(BookingUnavailableException.class,
                 () -> itemService.addComment(user2.getId(), item1.getId(), commentDto));
-        assertThrows(BookingUnavailableException.class,
-                () -> itemService.addComment(user2.getId(), item2.getId(), commentDto));
+
+        CommentDto comment = itemService.addComment(user2.getId(), item2.getId(), commentDto);
+        assertNotNull(comment);
     }
+
 }
