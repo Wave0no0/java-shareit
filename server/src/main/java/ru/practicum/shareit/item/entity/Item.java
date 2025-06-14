@@ -18,21 +18,29 @@ import java.util.List;
 @NoArgsConstructor
 @DynamicUpdate
 public class Item {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String name;
+
     private String description;
+
     private Boolean available;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id")
+    @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
+
     @OneToMany(mappedBy = "item")
-    @OrderBy("start")
+    @OrderBy("startTime")
     private List<Booking> bookings;
+
     @OneToMany(mappedBy = "item")
     @OrderBy("created")
     private List<Comment> comments;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "item_request_id")
     private ItemRequest itemRequest;

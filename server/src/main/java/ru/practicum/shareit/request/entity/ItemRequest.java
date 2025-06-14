@@ -6,7 +6,6 @@ import ru.practicum.shareit.item.entity.Item;
 import ru.practicum.shareit.user.entity.User;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -32,6 +31,6 @@ public class ItemRequest {
     @Column(nullable = false)
     private LocalDateTime created;
 
-    @OneToMany(mappedBy = "request", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "itemRequest", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Item> items = new ArrayList<>();
 }
