@@ -51,19 +51,17 @@ public class ItemService {
     }
 
     @Transactional(readOnly = true)
-    public ItemDto getItemById(long id, long userId) {
-        Item item = itemRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("There is no item with id=" + id));
+    public ItemDto getItemById(Long itemId, Long userId) {
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new NotFoundException("Item not found"));
 
-        if (item.getOwner().getId() == userId) {
+        if (item.getOwner().getId().equals(userId)) {
             return mapper.toItemDtoForOwner(item);
         } else {
-            if (!userRepository.existsById(userId)) {
-                throw new NotFoundException("There is no user with id=" + userId);
-            }
             return mapper.toItemDto(item);
         }
     }
+
 
     @Transactional(readOnly = true)
     public List<ItemDto> getItemByUserId(long userId) {

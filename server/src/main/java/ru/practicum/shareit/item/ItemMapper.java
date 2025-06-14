@@ -59,7 +59,7 @@ public abstract class ItemMapper {
 
     protected BookingDto getLastBooking(Item item) {
         List<Booking> bookings = item.getBookings();
-        if (bookings.isEmpty()) {
+        if (bookings == null || bookings.isEmpty()) {
             return null;
         }
         LocalDateTime now = LocalDateTime.now();
