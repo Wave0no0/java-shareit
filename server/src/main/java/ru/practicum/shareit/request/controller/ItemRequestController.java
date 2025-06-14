@@ -29,7 +29,6 @@ public class ItemRequestController {
     }
 
     @GetMapping
-    @ResponseStatus(HttpStatus.OK)
     public List<ItemRequestDto> getAllUserRequests(@RequestHeader(HttpHeaderUtil.USER_ID_HEADER) Long userId) {
         log.info("Получение запросов пользователя с id {}", userId);
         return itemRequestService.getAllUserRequests(userId);
